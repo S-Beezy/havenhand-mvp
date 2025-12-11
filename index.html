@@ -5,85 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Havenhand: Idle Kingdom Reborn</title>
 
-    <style>
-        body {
-            background: #f4f1e7;
-            font-family: Arial, sans-serif;
-            text-align: center;
-            padding: 20px;
-        }
-
-        h1 {
-            font-size: 28px;
-            margin-bottom: 20px;
-        }
-
-        .resource-box {
-            background: white;
-            padding: 15px;
-            margin: 10px auto;
-            border-radius: 10px;
-            width: 80%;
-            max-width: 400px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            font-size: 20px;
-        }
-
-        button {
-            display: block;
-            width: 80%;
-            max-width: 300px;
-            margin: 12px auto;
-            padding: 14px;
-            font-size: 18px;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
-            background: #7a5c3a;
-            color: white;
-            transition: 0.2s;
-        }
-
-        button:hover {
-            background: #5d452b;
-        }
-
-        .footer {
-            margin-top: 25px;
-            font-size: 14px;
-            opacity: 0.7;
-        }
-    </style>
+    <!-- External stylesheet -->
+    <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
 
     <h1>Havenhand: Idle Kingdom Reborn</h1>
 
-    <!-- Resource Displays -->
-    <div class="resource-box">
-        <strong>Wood:</strong> <span id="woodCount">0/100</span>
-    </div>
+    <!-- RESOURCE DISPLAY -->
+    <div id="woodDisplay" class="resource-box">Wood: 0 / 100</div>
+    <div id="hopeDisplay" class="resource-box">Hope: 0</div>
 
-    <div class="resource-box">
-        <strong>Hope:</strong> <span id="hopeCount">0</span>
-    </div>
+    <!-- ACTION BUTTONS -->
+    <button id="tapHutBtn">Tap Hut</button>
+    <button id="tapChapelBtn">Pray for Hope</button>
 
-    <div class="resource-box">
-        <strong>Unlocked Tiles:</strong> <span id="tileCount">0</span>
-    </div>
+    <!-- TILE + TERRITORY SYSTEM -->
+    <div id="tileCounter" class="resource-box">Tiles Owned: 1</div>
+    <button id="unlockTileBtn">Unlock Tile (Requires 5 Hope)</button>
 
+    <!-- WORKERS -->
+    <div id="workerDisplay" class="resource-box">Workers: 0</div>
+    <button id="hireWorkerBtn">Hire Worker (20 Wood)</button>
 
-    <!-- Action Buttons -->
-    <button id="tapWoodBtn">Tap Hut (Gather Wood)</button>
-    <button id="unlockTileBtn">Unlock Tile (-5 Hope)</button>
-    <button id="prayerBtn">🙏 Pray for Hope (+1)</button>
+    <div class="footer">Havenhand MVP Build</div>
 
+    <!-- Game Logic -->
+    <script src="game.js"></script>
 
-    <div class="footer">
-        Havenhand MVP — Reborn with Purpose 🌿
-    </div>
-
-    <script src="main.js"></script>
 </body>
 </html>
