@@ -1,69 +1,89 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Havenhand MVP</title>
-  <link rel="stylesheet" href="style.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Havenhand: Idle Kingdom Reborn</title>
+
+    <style>
+        body {
+            background: #f4f1e7;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+
+        .resource-box {
+            background: white;
+            padding: 15px;
+            margin: 10px auto;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 400px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            font-size: 20px;
+        }
+
+        button {
+            display: block;
+            width: 80%;
+            max-width: 300px;
+            margin: 12px auto;
+            padding: 14px;
+            font-size: 18px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            background: #7a5c3a;
+            color: white;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            background: #5d452b;
+        }
+
+        .footer {
+            margin-top: 25px;
+            font-size: 14px;
+            opacity: 0.7;
+        }
+    </style>
 </head>
+
 <body>
-  <div id="app">
-    <header>
-      <h1>Havenhand — MVP</h1>
-      <div class="resources">
-        <div>Wood: <span id="wood">0</span> / <span id="cap">100</span></div>
-        <div>Hope: <span id="hope">0</span></div>
-      </div>
-    </header>
 
-    <main>
-      <div class="center">
-        <button id="tapBtn" class="tap">Tap Hut</button>
-        <div class="info">Tap to gather wood. Passive worker produces in background.</div>
-      </div>
+    <h1>Havenhand: Idle Kingdom Reborn</h1>
 
-      <section class="panel">
-        <h2>Buildings</h2>
-        <div class="building">
-          <div class="b-left">
-            <strong>Starter Hut</strong> (Lv <span id="hutLv">1</span>)
-          </div>
-          <div class="b-right">
-            <button id="upgradeHut">Upgrade (cost <span id="hutCost">10</span> wood)</button>
-          </div>
-        </div>
+    <!-- Resource Displays -->
+    <div class="resource-box">
+        <strong>Wood:</strong> <span id="woodCount">0/100</span>
+    </div>
 
-        <div class="building">
-          <div class="b-left">
-            <strong>Woodshop</strong> (Lv <span id="shopLv">0</span>)
-          </div>
-          <div class="b-right">
-            <button id="buildShop">Build (cost 30 wood)</button>
-          </div>
-        </div>
+    <div class="resource-box">
+        <strong>Hope:</strong> <span id="hopeCount">0</span>
+    </div>
 
-        <div class="building">
-          <div class="b-left">
-            <strong>Storage Barn</strong> (Lv <span id="barnLv">1</span>)
-          </div>
-          <div class="b-right">
-            <button id="upgradeBarn">Upgrade Cap (cost <span id="barnCost">20</span>)</button>
-          </div>
-        </div>
-      </section>
+    <div class="resource-box">
+        <strong>Unlocked Tiles:</strong> <span id="tileCount">0</span>
+    </div>
 
-      <section class="panel">
-        <h2>Map</h2>
-        <div id="mapGrid" class="grid"></div>
-        <button id="unlockTile">Unlock Tile (cost 5 Hope)</button>
-      </section>
-    </main>
 
-    <footer>
-      <small>Havenhand MVP — prototype</small>
-    </footer>
-  </div>
+    <!-- Action Buttons -->
+    <button id="tapWoodBtn">Tap Hut (Gather Wood)</button>
+    <button id="unlockTileBtn">Unlock Tile (-5 Hope)</button>
+    <button id="prayerBtn">🙏 Pray for Hope (+1)</button>
 
-  <script src="main.js"></script>
+
+    <div class="footer">
+        Havenhand MVP — Reborn with Purpose 🌿
+    </div>
+
+    <script src="main.js"></script>
 </body>
 </html>
