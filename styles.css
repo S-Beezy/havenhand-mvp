@@ -1,59 +1,54 @@
-/* ===== Havenhand MVP — Stylesheet ===== */
-
-body {
-    background: #f4f1e7;
-    font-family: 'Segoe UI', Tahoma, sans-serif;
-    text-align: center;
-    padding: 20px;
-    color: #3a2d22;
+/* Havenhand MVP - styles.css - mobile-first */
+:root{
+  --bg:#fbf8f2;
+  --panel:#ffffff;
+  --accent:#7a5c3a;
+  --muted:#6e5a46;
+  --shadow: rgba(25,25,25,0.08);
 }
 
-h1 {
-    font-size: 32px;
-    margin-bottom: 20px;
-    color: #5f482f;
-    letter-spacing: 1px;
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  background:var(--bg);
+  font-family: "Nunito", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  color:var(--muted);
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
 }
 
-.resource-box {
-    background: #ffffff;
-    padding: 15px;
-    margin: 10px auto;
-    border-radius: 12px;
-    width: 80%;
-    max-width: 400px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-    font-size: 20px;
-    border-left: 6px solid #8c704a;
-}
+#app{max-width:900px;margin:0 auto;padding:12px}
+header{display:flex;flex-direction:column;align-items:center;gap:8px}
+h1{margin:6px 0;font-size:26px;color:var(--accent)}
+.top-row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.res{background:var(--panel);padding:8px 12px;border-radius:10px;box-shadow:0 6px 18px var(--shadow);font-size:16px}
 
-button {
-    display: block;
-    width: 80%;
-    max-width: 300px;
-    margin: 12px auto;
-    padding: 14px;
-    font-size: 18px;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-    background: #7a5c3a;
-    color: white;
-    transition: 0.2s;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.25);
-}
+main{padding:8px 0}
+.panel{background:var(--panel);margin:12px 0;padding:12px;border-radius:12px;box-shadow:0 8px 24px var(--shadow)}
+.action-panel{text-align:center}
+.big{font-size:18px;padding:14px 12px;border-radius:12px;border:none;background:var(--accent);color:white;width:90%;max-width:420px}
+.small-buttons{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:10px}
+.small-buttons button{padding:8px 10px;border-radius:10px;border:none;background:#b89a6a;color:white}
+.info-line{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:10px;align-items:center}
+.info-line button{padding:8px 10px;border-radius:10px;border:none;background:#9c8a6b;color:white}
 
-button:hover {
-    background: #5d452b;
-    transform: scale(1.03);
-}
+.building-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.building{background:#fff;padding:10px;border-radius:10px;width:250px;box-shadow:0 6px 18px var(--shadow)}
+.building .title{font-size:16px;margin-bottom:6px}
+.building .meta{font-size:14px;color:#6b5a45;margin-bottom:8px}
+.building .controls button{width:100%;padding:8px;border-radius:8px;border:none;background:#7a5c3a;color:white}
 
-button:active {
-    transform: scale(0.97);
-}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px}
+.tile{background:#f6efe6;border-radius:8px;padding:14px;text-align:center;border:1px solid rgba(0,0,0,0.03)}
+.tile.locked{opacity:0.46;background:#ece7df}
+.map-controls{display:flex;justify-content:center;margin-top:10px}
 
-.footer {
-    margin-top: 25px;
-    font-size: 14px;
-    opacity: 0.7;
-}
+footer{margin-top:8px;text-align:center;color:#7c6b55;font-size:13px}
+
+/* Tutorial overlay */
+.overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(10,10,10,0.45);z-index:30}
+.overlay.hidden{display:none}
+.tutorial-card{background:var(--panel);padding:18px;border-radius:12px;max-width:420px;box-shadow:0 16px 40px var(--shadow);text-align:center}
+.tutorial-card #tutorialText{font-size:16px;margin-bottom:12px}
+.tutorial-controls button{padding:10px 14px;border-radius:8px;border:none;background:var(--accent);color:white}
