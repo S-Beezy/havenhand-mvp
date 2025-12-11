@@ -1,38 +1,97 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Havenhand: Idle Kingdom Reborn</title>
-
-    <!-- External stylesheet -->
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Havenhand — Idle Kingdom Reborn (MVP)</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
-
 <body>
+  <div id="app">
+    <header>
+      <h1>Havenhand 🌿</h1>
+      <div class="top-row">
+        <div class="res">
+          🌲 <strong>Wood:</strong> <span id="woodCount">0</span> / <span id="capCount">100</span>
+        </div>
+        <div class="res">
+          ✨ <strong>Hope:</strong> <span id="hopeCount">0</span>
+        </div>
+      </div>
+    </header>
 
-    <h1>Havenhand: Idle Kingdom Reborn</h1>
+    <main>
+      <!-- ACTION PANEL -->
+      <section class="panel action-panel">
+        <button id="tapBtn" class="big">🏠 Tap Hut (Gather Wood)</button>
 
-    <!-- RESOURCE DISPLAY -->
-    <div id="woodDisplay" class="resource-box">Wood: 0 / 100</div>
-    <div id="hopeDisplay" class="resource-box">Hope: 0</div>
+        <div class="small-buttons">
+          <button id="prayerBtn">🙏 Pray (+1 Hope)</button>
+          <button id="saveBtn">💾 Save Now</button>
+          <button id="loadBtn">🔁 Load</button>
+        </div>
 
-    <!-- ACTION BUTTONS -->
-    <button id="tapHutBtn">Tap Hut</button>
-    <button id="tapChapelBtn">Pray for Hope</button>
+        <div class="info-line">
+          <span>Workers: <strong id="workerCount">0</strong> 👷</span>
+          <button id="hireWorkerBtn">Hire Worker (20 🌲)</button>
+        </div>
+      </section>
 
-    <!-- TILE + TERRITORY SYSTEM -->
-    <div id="tileCounter" class="resource-box">Tiles Owned: 1</div>
-    <button id="unlockTileBtn">Unlock Tile (Requires 5 Hope)</button>
+      <!-- BUILDINGS PANEL -->
+      <section class="panel">
+        <h2>Buildings</h2>
+        <div class="building-row">
+          <div class="building">
+            <div class="title">🏚️ Starter Hut</div>
+            <div class="meta">Lv <span id="hutLv">1</span></div>
+            <div class="controls">
+              <button id="upgradeHutBtn">Upgrade (cost <span id="hutCost">10</span> 🌲)</button>
+            </div>
+          </div>
 
-    <!-- WORKERS -->
-    <div id="workerDisplay" class="resource-box">Workers: 0</div>
-    <button id="hireWorkerBtn">Hire Worker (20 Wood)</button>
+          <div class="building">
+            <div class="title">🪵 Woodshop</div>
+            <div class="meta">Lv <span id="shopLv">0</span></div>
+            <div class="controls">
+              <button id="buildShopBtn">Build (30 🌲)</button>
+            </div>
+          </div>
 
-    <div class="footer">Havenhand MVP Build</div>
+          <div class="building">
+            <div class="title">🚪 Storage Barn</div>
+            <div class="meta">Lv <span id="barnLv">1</span></div>
+            <div class="controls">
+              <button id="upgradeBarnBtn">Upgrade Cap (cost <span id="barnCost">20</span> 🌲)</button>
+            </div>
+          </div>
+        </div>
+      </section>
 
-    <!-- Game Logic -->
-    <script src="game.js"></script>
+      <!-- MAP GRID -->
+      <section class="panel">
+        <h2>Territory</h2>
+        <div id="mapGrid" class="grid"></div>
+        <div class="map-controls">
+          <button id="unlockTileBtn">Unlock Tile (-5 ✨ Hope)</button>
+        </div>
+      </section>
 
+      <footer>
+        <small>Havenhand MVP — autosave + manual save. Built for mobile.</small>
+      </footer>
+    </main>
+  </div>
+
+  <!-- TUTORIAL OVERLAY -->
+  <div id="tutorialOverlay" class="overlay hidden">
+    <div class="tutorial-card">
+      <div id="tutorialText">Welcome!</div>
+      <div class="tutorial-controls">
+        <button id="tutorialNextBtn">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
 </body>
 </html>
