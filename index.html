@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Havenhand MVP</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>Havenhand — MVP</h1>
+      <div class="resources">
+        <div>Wood: <span id="wood">0</span> / <span id="cap">100</span></div>
+        <div>Hope: <span id="hope">0</span></div>
+      </div>
+    </header>
+
+    <main>
+      <div class="center">
+        <button id="tapBtn" class="tap">Tap Hut</button>
+        <div class="info">Tap to gather wood. Passive worker produces in background.</div>
+      </div>
+
+      <section class="panel">
+        <h2>Buildings</h2>
+        <div class="building">
+          <div class="b-left">
+            <strong>Starter Hut</strong> (Lv <span id="hutLv">1</span>)
+          </div>
+          <div class="b-right">
+            <button id="upgradeHut">Upgrade (cost <span id="hutCost">10</span> wood)</button>
+          </div>
+        </div>
+
+        <div class="building">
+          <div class="b-left">
+            <strong>Woodshop</strong> (Lv <span id="shopLv">0</span>)
+          </div>
+          <div class="b-right">
+            <button id="buildShop">Build (cost 30 wood)</button>
+          </div>
+        </div>
+
+        <div class="building">
+          <div class="b-left">
+            <strong>Storage Barn</strong> (Lv <span id="barnLv">1</span>)
+          </div>
+          <div class="b-right">
+            <button id="upgradeBarn">Upgrade Cap (cost <span id="barnCost">20</span>)</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Map</h2>
+        <div id="mapGrid" class="grid"></div>
+        <button id="unlockTile">Unlock Tile (cost 5 Hope)</button>
+      </section>
+    </main>
+
+    <footer>
+      <small>Havenhand MVP — prototype</small>
+    </footer>
+  </div>
+
+  <script src="main.js"></script>
+</body>
+</html>
