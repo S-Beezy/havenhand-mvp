@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Havenhand — Idle Kingdom Reborn (MVP)</title>
+  <title>Havenhand — Idle Kingdom Reborn (Rebalanced)</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -17,6 +17,9 @@
         <div class="res">
           ✨ <strong>Hope:</strong> <span id="hopeCount">0</span>
         </div>
+        <div class="res">
+          🙏 <strong>Blessings:</strong> <span id="blessingCount">0</span>
+        </div>
       </div>
     </header>
 
@@ -26,7 +29,7 @@
         <button id="tapBtn" class="big">🏠 Tap Hut (Gather Wood)</button>
 
         <div class="small-buttons">
-          <button id="prayerBtn">🙏 Pray (+1 Hope)</button>
+          <button id="prayerBtn">🙏 Pray (Deep) — 60m cooldown</button>
           <button id="saveBtn">💾 Save Now</button>
           <button id="loadBtn">🔁 Load</button>
         </div>
@@ -34,6 +37,12 @@
         <div class="info-line">
           <span>Workers: <strong id="workerCount">0</strong> 👷</span>
           <button id="hireWorkerBtn">Hire Worker (20 🌲)</button>
+          <button id="speedUpBtn">⚡ Speed Up Upgrade (-1 Blessing)</button>
+        </div>
+
+        <div id="pendingUpgradesBox" class="resource-box" style="display:none;">
+          <strong>Pending Upgrades</strong>
+          <div id="pendingUpgradesList"></div>
         </div>
       </section>
 
@@ -72,17 +81,17 @@
         <h2>Territory</h2>
         <div id="mapGrid" class="grid"></div>
         <div class="map-controls">
-          <button id="unlockTileBtn">Unlock Tile (-5 ✨ Hope)</button>
+          <button id="unlockTileBtn">Unlock Tile (-5 ✨ & 200 🌲)</button>
         </div>
       </section>
 
       <footer>
-        <small>Havenhand MVP — autosave + manual save. Built for mobile.</small>
+        <small>Havenhand — Rebalanced MVP (autosave + manual save)</small>
       </footer>
     </main>
   </div>
 
-  <!-- TUTORIAL OVERLAY -->
+  <!-- TUTORIAL OVERLAY (unchanged) -->
   <div id="tutorialOverlay" class="overlay hidden">
     <div class="tutorial-card">
       <div id="tutorialText">Welcome!</div>
