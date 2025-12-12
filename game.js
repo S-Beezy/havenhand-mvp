@@ -1,16 +1,13 @@
-/* Havenhand MVP - game.js
-   Option C: fully-loaded MVP (mobile-first)
-   - 4x4 grid
+/* game.js — Havenhand (Rebalanced Option B)
+   - prayer = 60 minute cooldown
+   - building upgrades take real time (tiers)
+   - blessings currency (daily + milestone)
+   - slower passive production
    - autosave + manual save
-   - workers, shop, barn, hut, hope
-   - guided tutorial (multi-step)
-   - emoji icons (no image assets)
 */
 
-/* -------------------------
-   State (default / loadable)
-   ------------------------- */
-const SAVE_KEY = "havenhand_save_v1";
+const SAVE_KEY = "havenhand_save_v2";
+const NOW = () => Date.now();
 
 let state = {
   wood: 0,
@@ -20,66 +17,70 @@ let state = {
   shopLv: 0,
   barnLv: 1,
   workers: 0,
-  tilesUnlocked: 1,      // start with 1 tile unlocked
-  unlockedState: [],     // will fill on init
-  prayerCooldownUntil: 0,
+  tilesUnlocked: 1,
+  unlockedState: [],
+  // upgrade queue: {id, building, fromLv, toLv, completesAt}
+  pendingUpgrades: [],
+  blessings: 0,
+  lastDailyBlessingAt: 0,
+  prayerAvailableAt: 0, // timestamp when next prayer allowed
   tutorialStep: 0,
-  createdAt: Date.now()
+  createdAt: NOW(),
+  lastSave: 0
 };
 
-/* -------------------------
-   Utility helpers
-   ------------------------- */
-function el(id){ return document.getElementById(id); }
-function now(){ return Date.now(); }
+/* ---------- UTILS ---------- */
+const el = id => document.getElementById(id);
+const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
 
-/* -------------------------
-   Save / Load
-   ------------------------- */
+/* ---------- SAVE / LOAD ---------- */
 function saveGame() {
   try {
-    state.lastSave = now();
+    state.lastSave = NOW();
     localStorage.setItem(SAVE_KEY, JSON.stringify(state));
-    toast("Saved ✔️");
+    // small console feedback
+    console.log("Saved at", new Date(state.lastSave).toLocaleTimeString());
   } catch (e) {
-    console.error("Save failed", e);
-    toast("Save failed");
+    console.error("Save error", e);
   }
 }
 
 function loadGame() {
   const raw = localStorage.getItem(SAVE_KEY);
-  if(!raw) return false;
+  if (!raw) return false;
   try {
     const parsed = JSON.parse(raw);
-    // simple validation
-    if(parsed && typeof parsed.wood === "number") {
+    if (parsed && typeof parsed.wood === "number") {
+      // merge carefully so functions still exist
       state = Object.assign(state, parsed);
-      initTiles(); // rebuild UI tiles array
+      initTiles();
+      resumePendingUpgrades();
+      checkDailyBlessing();
       updateUI();
-      toast("Loaded ✔️");
+      console.log("Loaded save.");
       return true;
     }
-  } catch(e) {
-    console.error("Load error", e);
+  } catch (e) {
+    console.error("Load failed", e);
   }
   return false;
 }
 
-/* -------------------------
-   Toast (tiny messages)
-   ------------------------- */
-let toastTimer = 0;
-function toast(msg){
-  // small ephemeral notification in console and via alert-free DOM
-  console.log("TOAST:",msg);
-  // keep it minimal — we won't render a fancy toast element for MVP
+/* ---------- INITIALIZATION & TILES ---------- */
+const GRID_SIZE = 4;
+function initTiles() {
+  const total = GRID_SIZE * GRID_SIZE;
+  if (!Array.isArray(state.unlockedState) || state.unlockedState.length !== total) {
+    state.unlockedState = new Array(total).fill(false);
+  }
+  // ensure first N tiles unlocked
+  for (let i=0; i<total; i++) {
+    state.unlockedState[i] = i < state.tilesUnlocked;
+  }
 }
 
-/* -------------------------
-   UI Update
-   ------------------------- */
-function updateUI(){
+/* ---------- UI UPDATES ---------- */
+function updateUI() {
   el("woodCount").textContent = Math.floor(state.wood);
   el("capCount").textContent = Math.floor(state.cap);
   el("hopeCount").textContent = Math.floor(state.hope);
@@ -87,182 +88,256 @@ function updateUI(){
   el("shopLv").textContent = state.shopLv;
   el("barnLv").textContent = state.barnLv;
   el("workerCount").textContent = state.workers;
-  // tile grid refresh (simple)
+  el("blessingCount").textContent = state.blessings;
+
   renderTiles();
+  renderPendingUpgrades();
+  // update prayer button label with cooldown
+  updatePrayerLabel();
   // update costs
   el("hutCost").textContent = calcHutCost();
   el("barnCost").textContent = calcBarnCost();
 }
 
-/* -------------------------
-   Costs & formulas
-   ------------------------- */
-function calcHutCost(){
-  return 10 + Math.floor((state.hutLv-1) * 8);
-}
-function calcBarnCost(){
-  return 20 * state.barnLv;
+/* ---------- RENDER TILES ---------- */
+function renderTiles() {
+  const grid = el("mapGrid");
+  grid.innerHTML = "";
+  const total = GRID_SIZE * GRID_SIZE;
+  for (let i=0;i<total;i++){
+    const tile = document.createElement("div");
+    tile.className = "tile " + (state.unlockedState[i] ? "" : "locked");
+    tile.textContent = state.unlockedState[i] ? `Tile ${i+1}` : "Locked";
+    grid.appendChild(tile);
+  }
 }
 
-/* -------------------------
-   Core actions
-   ------------------------- */
+/* ---------- PENDING UPGRADES UI ---------- */
+function renderPendingUpgrades(){
+  const box = el("pendingUpgradesBox");
+  const list = el("pendingUpgradesList");
+  list.innerHTML = "";
+  if (state.pendingUpgrades.length === 0) {
+    box.style.display = "none";
+    return;
+  }
+  box.style.display = "block";
+  state.pendingUpgrades.forEach(u => {
+    const div = document.createElement("div");
+    const remaining = Math.max(0, Math.floor((u.completesAt - NOW())/1000));
+    div.textContent = `${u.building} → Lv ${u.toLv} (in ${remaining}s)`;
+    list.appendChild(div);
+  });
+}
+
+/* ---------- COST FORMULAS ---------- */
+function calcHutCost(){ return 10 + Math.floor((state.hutLv-1) * 12); }
+function calcBarnCost(){ return 20 * state.barnLv; }
+
+/* ---------- UPGRADE DURATIONS (seconds) ---------- */
+/* level changes map to durations so higher tiers take much longer */
+function upgradeDurationSeconds(targetLevel){
+  // mapping by target level (approx)
+  if (targetLevel <= 2) return 5;         // fast early
+  if (targetLevel <= 3) return 30;        // small wait
+  if (targetLevel <= 4) return 300;       // 5 minutes
+  if (targetLevel <= 5) return 1800;      // 30 minutes
+  return 7200;                            // 2 hours for higher tiers
+}
+
+/* ---------- CORE ACTIONS ---------- */
 function tapHut(){
-  if(state.wood < state.cap){
-    const gain = 1 * state.hutLv; // each hut level increases tap power
+  if (state.wood < state.cap) {
+    const gain = 1 * state.hutLv; // scaling tap
     state.wood += gain;
-    if(state.wood > state.cap) state.wood = state.cap;
+    if (state.wood > state.cap) state.wood = state.cap;
     updateUI();
-  } else {
-    // full storage -> might generate hope via passive check
   }
 }
 
-function upgradeHut(){
-  const cost = calcHutCost();
-  if(state.wood >= cost){
+/* begin timed upgrade */
+function queueUpgrade(building){
+  // building: 'hut' or 'barn' and for shop we 'build' rather than upgrade
+  if (building === "hut") {
+    const cost = calcHutCost();
+    if (state.wood < cost) return alert("Not enough wood");
     state.wood -= cost;
-    state.hutLv += 1;
+    const toLv = state.hutLv + 1;
+    const secs = upgradeDurationSeconds(toLv);
+    state.pendingUpgrades.push({
+      id: "u"+(NOW()),
+      building: "Hut",
+      key: "hutLv",
+      fromLv: state.hutLv,
+      toLv: toLv,
+      completesAt: NOW() + secs*1000
+    });
     updateUI();
-    toast("Hut upgraded!");
-  } else toast("Not enough wood");
+    toast("Hut upgrade started");
+  } else if (building === "barn") {
+    const cost = calcBarnCost();
+    if (state.wood < cost) return alert("Not enough wood");
+    state.wood -= cost;
+    const toLv = state.barnLv + 1;
+    const secs = upgradeDurationSeconds(toLv);
+    state.pendingUpgrades.push({
+      id: "u"+(NOW()),
+      building: "Barn",
+      key: "barnLv",
+      fromLv: state.barnLv,
+      toLv: toLv,
+      completesAt: NOW() + secs*1000
+    });
+    updateUI();
+    toast("Barn upgrade started");
+  }
 }
 
+/* immediate build for woodshop (first build gives blessing) */
 function buildShop(){
-  if(state.shopLv === 0){
-    if(state.wood >= 30){
-      state.wood -=30;
-      state.shopLv = 1;
-      updateUI();
-      toast("Woodshop built!");
-    } else toast("Need 30 wood to build Woodshop");
-  } else {
-    toast("Woodshop already built");
+  if (state.shopLv > 0) return toast("Woodshop already exists");
+  if (state.wood < 30) return toast("Need 30 wood");
+  state.wood -= 30;
+  state.shopLv = 1;
+  // milestone: grant a single blessing for building the shop (slow reward)
+  state.blessings += 1;
+  toast("Woodshop built — Blessing granted!");
+  updateUI();
+}
+
+/* ---------- COMPLETE PENDING UPGRADES (called frequently) ---------- */
+function completePendingUpgrades(){
+  const now = NOW();
+  let changed = false;
+  for (let i = state.pendingUpgrades.length - 1; i >= 0; i--) {
+    const u = state.pendingUpgrades[i];
+    if (now >= u.completesAt) {
+      // apply upgrade
+      if (u.key === "hutLv") state.hutLv = u.toLv;
+      if (u.key === "barnLv") {
+        state.barnLv = u.toLv;
+        state.cap += 100; // each barn level adds capacity
+      }
+      state.pendingUpgrades.splice(i,1);
+      changed = true;
+    }
   }
+  if (changed) updateUI();
 }
 
-function upgradeBarn(){
-  const cost = calcBarnCost();
-  if(state.wood >= cost){
-    state.wood -= cost;
-    state.barnLv += 1;
-    state.cap += 100; // each barn upgrade increases cap
-    updateUI();
-    toast("Barn upgraded, capacity +100");
-  } else toast("Not enough wood");
-}
-
-/* -------------------------
-   Workers
-   ------------------------- */
+/* ---------- WORKER SYSTEM (slower production) ---------- */
 function hireWorker(){
-  if(state.wood >= 20){
-    state.wood -= 20;
-    state.workers += 1;
-    updateUI();
-    toast("Worker hired!");
-  } else toast("Need 20 wood to hire");
+  if (state.wood < 20) return toast("Need 20 wood to hire");
+  state.wood -= 20;
+  state.workers += 1;
+  updateUI();
+  toast("Worker hired");
 }
 
-/* Passive worker production (every 3s, each worker produces wood) */
+/* passive production tick (every 4s) */
 setInterval(() => {
-  if(state.workers > 0 && state.wood < state.cap){
-    const production = state.workers * 1; // 1 wood per worker per tick
-    state.wood += production;
-    if(state.wood > state.cap) state.wood = state.cap;
+  if (state.workers > 0 && state.wood < state.cap) {
+    // each worker yields 0.8 wood per tick (rebalanced)
+    const prod = state.workers * 0.8;
+    state.wood += prod;
+    if (state.wood > state.cap) state.wood = state.cap;
     updateUI();
   }
-}, 3000);
+}, 4000);
 
-/* -------------------------
-   Hope generation & prayer
-   ------------------------- */
-/* If wood is full, grant 1 hope every 5 seconds (passive) */
+/* ---------- HOPE & PRAYER (60 min cooldown) ---------- */
+function prayForHope(){
+  const now = NOW();
+  if (now < (state.prayerAvailableAt || 0)) {
+    const secs = Math.ceil((state.prayerAvailableAt - now)/1000);
+    return toast(`Prayer on cooldown: ${secs}s`);
+  }
+  // deep prayer: +1 hope, 60 min cooldown
+  state.hope += 1;
+  state.prayerAvailableAt = now + 60*60*1000; // 60 minutes
+  updateUI();
+  toast("You prayed and gained Hope");
+}
+
+/* show prayer cooldown text */
+function updatePrayerLabel(){
+  const btn = el("prayerBtn");
+  const now = NOW();
+  if (now >= (state.prayerAvailableAt || 0)) {
+    btn.textContent = "🙏 Pray (Deep) — Ready";
+  } else {
+    const left = Math.ceil((state.prayerAvailableAt - now)/1000);
+    // show mm:ss
+    const mm = Math.floor(left/60);
+    const ss = left % 60;
+    btn.textContent = `🙏 Pray — ${mm}:${String(ss).padStart(2,'0')}`;
+  }
+}
+
+/* passive hope when wood full: grant 1 hope every 5s (keeps but slower) */
 setInterval(() => {
-  if(state.wood >= state.cap){
+  if (state.wood >= state.cap) {
     state.hope += 1;
     updateUI();
   }
 }, 5000);
 
-function prayForHope(){
-  const nowTs = now();
-  if(nowTs < (state.prayerCooldownUntil || 0)){
-    const remaining = Math.ceil((state.prayerCooldownUntil - nowTs)/1000);
-    toast(`Prayer cooldown: ${remaining}s`);
-    return;
-  }
-  state.hope += 1;
-  state.prayerCooldownUntil = nowTs + 60000; // 60s cooldown
-  updateUI();
-  toast("You prayed and gained Hope");
-}
-
-/* -------------------------
-   Tile system (4x4 grid)
-   ------------------------- */
-const GRID_SIZE = 4; // 4x4 grid
-
-function initTiles(){
-  // ensure unlockedState array length equals GRID_SIZE^2
-  const total = GRID_SIZE * GRID_SIZE;
-  if(!Array.isArray(state.unlockedState) || state.unlockedState.length !== total){
-    state.unlockedState = new Array(total).fill(false);
-    // default unlock first N tiles
-    for(let i=0;i<state.tilesUnlocked && i<total;i++){
-      state.unlockedState[i] = true;
-    }
-  } else {
-    // if tilesUnlocked value changed, ensure leading tiles set true
-    let unlockedCount = state.tilesUnlocked || 1;
-    for(let i=0;i<total;i++){
-      state.unlockedState[i] = i < unlockedCount;
-    }
-  }
-}
-
-function renderTiles(){
-  const grid = el("mapGrid");
-  grid.innerHTML = "";
-  const total = GRID_SIZE*GRID_SIZE;
-  for(let i=0;i<total;i++){
-    const d = document.createElement("div");
-    d.className = "tile " + (state.unlockedState[i] ? "" : "locked");
-    if(state.unlockedState[i]){
-      d.textContent = `Tile ${i+1}`;
-    } else {
-      d.textContent = "Locked";
-    }
-    grid.appendChild(d);
-  }
-}
-
+/* ---------- TILE UNLOCK (needs Hope + Wood now) ---------- */
 function unlockTile(){
-  if(state.hope < 5){
-    toast("Need 5 Hope to unlock a tile");
-    return;
-  }
-  // find first locked tile
+  if (state.hope < 5) return toast("Need 5 Hope");
+  if (state.wood < 200) return toast("Need 200 Wood to expand");
+  // find locked
   const idx = state.unlockedState.indexOf(false);
-  if(idx === -1){
-    toast("All tiles unlocked");
-    return;
-  }
+  if (idx === -1) return toast("All tiles unlocked");
   state.hope -= 5;
+  state.wood -= 200;
   state.unlockedState[idx] = true;
   state.tilesUnlocked += 1;
   updateUI();
-  toast("Tile unlocked!");
+  toast("Territory expanded!");
 }
 
-/* -------------------------
-   Tutorial (multi-step)
-   ------------------------- */
+/* ---------- BLESSINGS: daily + milestone ---------- */
+function checkDailyBlessing(){
+  const last = state.lastDailyBlessingAt || 0;
+  const now = NOW();
+  // if more than 24 hours passed since lastDailyBlessingAt, grant one
+  if (now - last >= 24*60*60*1000) {
+    state.blessings += 1;
+    state.lastDailyBlessingAt = now;
+    toast("Daily Blessing awarded");
+    updateUI();
+  }
+}
+
+/* Use a blessing to instantly finish the oldest pending upgrade */
+function speedUpWithBlessing(){
+  if (state.blessings <= 0) return toast("No Blessings available");
+  if (state.pendingUpgrades.length === 0) return toast("No upgrade to speed up");
+  // finish the earliest upgrade
+  state.blessings -= 1;
+  const u = state.pendingUpgrades.shift();
+  if (u.key === "hutLv") state.hutLv = u.toLv;
+  if (u.key === "barnLv") {
+    state.barnLv = u.toLv;
+    state.cap += 100;
+  }
+  toast("Upgrade finished using Blessing");
+  updateUI();
+}
+
+/* ---------- PENDING UPGRADE RESUMPTION (after load) ---------- */
+function resumePendingUpgrades(){
+  // during load we keep pendingUpgrades; this function just cleans completed ones
+  completePendingUpgrades();
+}
+
+/* ---------- TUTORIAL (unchanged short steps) ---------- */
 const tutorialSteps = [
-  "Welcome to Havenhand. Your small outpost needs care and attention. Tap the Hut to gather wood.",
-  "Great! Use wood to build and upgrade. Try upgrading your Hut once you have enough wood.",
-  "Pray to gain Hope (once every 60s). Hope unlocks new tiles and blessings.",
-  "Hire workers to automate wood gathering. Unlock tiles to expand your village. Good luck!"
+  "Welcome to Havenhand. Tap the Hut to gather wood.",
+  "Great! Queue an upgrade to see timed progress. You can speed upgrades with Blessings.",
+  "Pray to gain Hope (deep prayer — 60 minute cooldown). Hope unlocks new tiles.",
+  "Hire workers to automate wood gathering. Good luck!"
 ];
 
 function startTutorial(){
@@ -274,65 +349,54 @@ function showTutorialStep(){
   const overlay = el("tutorialOverlay");
   const text = el("tutorialText");
   overlay.classList.remove("hidden");
-  text.textContent = tutorialSteps[state.tutorialStep] || "Tutorial complete!";
-  // change next button text on last step
+  text.textContent = tutorialSteps[state.tutorialStep] || "Tutorial done!";
   el("tutorialNextBtn").textContent = (state.tutorialStep < tutorialSteps.length-1) ? "Next" : "Finish";
 }
 
 function advanceTutorial(){
   state.tutorialStep++;
-  if(state.tutorialStep >= tutorialSteps.length){
+  if (state.tutorialStep >= tutorialSteps.length){
     el("tutorialOverlay").classList.add("hidden");
-    toast("Tutorial complete");
+    toast("Tutorial completed");
     saveGame();
     return;
   }
   showTutorialStep();
 }
 
-/* -------------------------
-   Autosave interval
-   ------------------------- */
-setInterval(() => {
-  saveGame();
-}, 10000); // every 10 seconds
+/* ---------- AUTOSAVE ---------- */
+setInterval(saveGame, 10000);
 
-/* -------------------------
-   Initial setup & button wiring
-   ------------------------- */
+/* ---------- PENDING UPGRADE CHECK ---------- */
+setInterval(completePendingUpgrades, 1000);
+
+/* ---------- DAILY BLESSING CHECK ---------- */
+setInterval(checkDailyBlessing, 60*1000); // once a minute check for daily blessing eligibility
+
+/* ---------- BUTTON HOOKS & INIT ---------- */
 window.addEventListener("load", () => {
-  // init tiles and UI
   initTiles();
-  // try load automatically if present
   loadGame();
   updateUI();
 
-  // buttons
   el("tapBtn").addEventListener("click", () => { tapHut(); updateUI(); });
-  el("upgradeHutBtn").addEventListener("click", upgradeHut);
+  el("upgradeHutBtn").addEventListener("click", () => queueUpgrade("hut"));
   el("buildShopBtn").addEventListener("click", buildShop);
-  el("upgradeBarnBtn").addEventListener("click", upgradeBarn);
-  el("hireWorkerBtn").addEventListener("click", hireWorker);
-
+  el("upgradeBarnBtn").addEventListener("click", () => queueUpgrade("barn"));
+  el("hireWorkerBtn").addEventListener("click", () => { hireWorker(); updateUI(); });
   el("prayerBtn").addEventListener("click", () => { prayForHope(); updateUI(); });
-  el("unlockTileBtn").addEventListener("click", unlockTile);
+  el("unlockTileBtn").addEventListener("click", () => { unlockTile(); updateUI(); });
 
   el("saveBtn").addEventListener("click", saveGame);
   el("loadBtn").addEventListener("click", () => { loadGame(); updateUI(); });
 
-  // tutorial
-  el("tutorialNextBtn").addEventListener("click", () => {
-    advanceTutorial();
-  });
+  el("speedUpBtn").addEventListener("click", () => { speedUpWithBlessing(); });
 
-  // start tutorial on first run only
+  el("tutorialNextBtn").addEventListener("click", () => { advanceTutorial(); });
+
+  // start tutorial for new players
   if(!localStorage.getItem(SAVE_KEY)){
     startTutorial();
-  } else {
-    // if player has state and tutorial not finished, show step
-    if(state.tutorialStep > -1 && state.tutorialStep < tutorialSteps.length){
-      // prompt to continue tutorial? we auto-continue in this MVP
-      // showTutorialStep();
-    }
+    saveGame();
   }
 });
